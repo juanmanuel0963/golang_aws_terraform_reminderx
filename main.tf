@@ -349,7 +349,7 @@ output "module_lambda_func_go_lambda_func_base_url" {
 ##################################################################################
 
 module "module_reminderx_admins" {
-  source                           = "./microservices_lambda_reminderx/rmdx_admins/terraform"
+  source                           = "./microservices_reminderx/rmdx_admins/terraform"
   region                           = var.region
   access_key                       = var.access_key
   secret_key                       = var.secret_key
