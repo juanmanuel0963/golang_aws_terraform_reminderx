@@ -1,0 +1,9 @@
+
+Documentation
+-------------
+http://cars-api-golang.s3-website-us-east-1.amazonaws.com/
+
+Codegen
+-------
+go get github.com/go-openapi/runtime/middleware 
+oapi-codegen -package carwash carwash.yaml > carwash.gen.go

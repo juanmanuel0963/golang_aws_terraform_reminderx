@@ -1,0 +1,12 @@
+go get -u github.com/aws/aws-lambda-go/events
+go get -u github.com/aws/aws-lambda-go/lambda
+
+--before build binary to upload to AWS
+$Env:GOOS = "linux" 
+
+--buiild
+go build main.go
+
+--On project root folder
+terraform plan -out "output_plan.tfplan"
+terraform apply -auto-approve "output_plan.tfplan"
