@@ -15,10 +15,11 @@ func Handler_lambda_func(request events.APIGatewayProxyRequest) (events.APIGatew
 
 	msg := "Hello there"
 	log.Println(msg)
+	log.Println(request.HTTPMethod)
 
 	response := events.APIGatewayProxyResponse{
 		StatusCode: 200,
-		Body:       msg,
+		Body:       msg + " " + request.HTTPMethod,
 	}
 
 	return response, nil
