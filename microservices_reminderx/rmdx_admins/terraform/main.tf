@@ -190,7 +190,6 @@ resource "aws_lambda_function" "the_lambda_function" {
       RMDX_USER_NAME        = var.dbUser,
       RMDX_PASSWORD         = var.dbPassword,
       RMDX_PORT             = var.dbPort,
-      PORT                  = 443,
     }
   }
 
