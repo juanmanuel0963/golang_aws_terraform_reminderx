@@ -3,19 +3,19 @@
 #############################################################################
 
 variable "region" {
-  type    = string
+  type = string
 }
 
 variable "access_key" {
-  type    = string
+  type = string
 }
 
 variable "secret_key" {
-  type    = string
+  type = string
 }
 
 variable "api_gateway_name" {
-  type    = string
+  type = string
 }
 
 #############################################################################
@@ -25,7 +25,7 @@ variable "api_gateway_name" {
 terraform {
   required_providers {
     aws = {
-      source  = "hashicorp/aws" 
+      source  = "hashicorp/aws"
       version = "~> 5.0"
     }
     random = {
@@ -55,6 +55,11 @@ provider "aws" {
 resource "aws_apigatewayv2_api" "the_api_gateway" {
   name          = var.api_gateway_name
   protocol_type = "HTTP"
+  cors_configuration {
+    allow_origins = ["*"]
+    //allow_methods = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST" ,"PUT"]
+    //allow_headers = ["Content-Type", "Authorization", "X-Amz-Date", "X-Api-Key", "X-Amz-Security-Token"]
+  }
 }
 
 //----------API Gateway default stage creation----------
@@ -64,7 +69,7 @@ resource "aws_apigatewayv2_api" "the_api_gateway" {
 resource "aws_apigatewayv2_stage" "the_api_gateway" {
   api_id = aws_apigatewayv2_api.the_api_gateway.id
 
-  name = "$default"
+  name        = "$default"
   auto_deploy = true
 
   access_log_settings {
@@ -84,13 +89,16 @@ resource "aws_apigatewayv2_stage" "the_api_gateway" {
       }
     )
   }
+
+
+
 }
 
 //----------API Gateway - adding Cloud Watch ----------
 
 //Defines a log group to store access logs for the aws_apigatewayv2_stage.the_api_gateway API Gateway stage.
 resource "aws_cloudwatch_log_group" "api_gw" {
-  name = "/aws/api_gw/${aws_apigatewayv2_api.the_api_gateway.name}"
+  name              = "/aws/api_gw/${aws_apigatewayv2_api.the_api_gateway.name}"
   retention_in_days = 30
 }
 
@@ -100,20 +108,20 @@ resource "aws_cloudwatch_log_group" "api_gw" {
 
 output "api_gateway_id" {
   description = "Id of the API Gateway."
-  value = aws_apigatewayv2_api.the_api_gateway.id
+  value       = aws_apigatewayv2_api.the_api_gateway.id
 }
 
 output "api_gateway_name" {
   description = "Name of the API Gateway."
-  value = aws_apigatewayv2_api.the_api_gateway.name
+  value       = aws_apigatewayv2_api.the_api_gateway.name
 }
 
 output "api_gateway_execution_arn" {
   description = "Execution arn of the API Gateway."
-  value = aws_apigatewayv2_api.the_api_gateway.execution_arn
+  value       = aws_apigatewayv2_api.the_api_gateway.execution_arn
 }
 
 output "api_gateway_invoke_url" {
   description = "Base URL for API Gateway stage."
-  value = "${aws_apigatewayv2_stage.the_api_gateway.invoke_url}"
+  value       = aws_apigatewayv2_stage.the_api_gateway.invoke_url
 }

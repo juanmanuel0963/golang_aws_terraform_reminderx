@@ -267,7 +267,7 @@ resource "aws_apigatewayv2_route" "the_lambda_function" {
 
   route_key          = "ANY /${local.lambda_func_name}"
   target             = "integrations/${aws_apigatewayv2_integration.the_lambda_function.id}"
-  authorization_type = "AWS_IAM"
+  //authorization_type = "AWS_IAM"
 }
 
 //----------API Gateway - adding permissions to invoke lambda function ----------
