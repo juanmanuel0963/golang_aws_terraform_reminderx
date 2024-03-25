@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	//"github.com/juanmanuel0963/golang_aws_terraform_reminderx/v2/microservices_reminderx/rmdx_admins/source_code/handler"
 )
 
 type Admin struct {
@@ -20,7 +19,7 @@ type Admin struct {
 	FirstName     string `json:"firstName"`
 	SurName       string `json:"surName"`
 	CountryCode   string `json:"countryCode"`
-	Phone         string `json:"phone"`
+	PhoneNumber   string `json:"phoneNumber"` // Updated field name
 	Email         string `json:"email"`
 	Password      string `json:"password"`
 	IsSuperAdmin  bool   `json:"isSuperAdmin"`
@@ -48,7 +47,6 @@ func init() {
 }
 
 func main() {
-
 	fmt.Println("Running server...")
 	lambda.Start(HandleRequest)
 }
@@ -70,7 +68,6 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 
 func GetAdmins(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("GET")
-
 	log.Println(request.QueryStringParameters)
 	adminIDStr := request.QueryStringParameters["id"]
 
@@ -97,9 +94,7 @@ func GetAdmins(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 }
 
 func CreateAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
 	log.Println("POST")
-
 	var admin Admin
 	err := json.Unmarshal([]byte(request.Body), &admin)
 	if err != nil {
@@ -111,9 +106,7 @@ func CreateAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 }
 
 func UpdateAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
 	log.Println("PUT")
-
 	log.Println(request.QueryStringParameters)
 	adminID, err := strconv.Atoi(request.QueryStringParameters["id"])
 
@@ -140,9 +133,7 @@ func UpdateAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 }
 
 func DeleteAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-
 	log.Println("DELETE")
-
 	log.Println(request.QueryStringParameters)
 	log.Println(request.PathParameters)
 
