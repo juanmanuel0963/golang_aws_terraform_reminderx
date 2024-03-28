@@ -43,10 +43,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	db.AutoMigrate(&Admin{})
 }
 
 func main() {
+	db.AutoMigrate(&Admin{})
 	fmt.Println("Running server...")
 	lambda.Start(HandleRequest)
 }
@@ -93,13 +93,51 @@ func GetAdmins(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 	return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
 }
 
+/*
+	func CreateAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+		log.Println("POST")
+		var admin Admin
+		err := json.Unmarshal([]byte(request.Body), &admin)
+		if err != nil {
+			return events.APIGatewayProxyResponse{Body: fmt.Sprintf("Failed to unmarshal request body: %v", err), StatusCode: 400}, nil
+		}
+		db.Create(&admin)
+		response, _ := json.Marshal(admin)
+		return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 201}, nil
+	}
+*/
+
 func CreateAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("POST")
+
 	var admin Admin
 	err := json.Unmarshal([]byte(request.Body), &admin)
 	if err != nil {
 		return events.APIGatewayProxyResponse{Body: fmt.Sprintf("Failed to unmarshal request body: %v", err), StatusCode: 400}, nil
 	}
+
+	// Check if an admin with the provided email exists
+	var countByEmail int64
+	db.Model(&Admin{}).Where("email = ?", admin.Email).Count(&countByEmail)
+	emailExists := countByEmail > 0
+
+	// Check if an admin with the provided countryCode and phoneNumber exists
+	var countByPhone int64
+	db.Model(&Admin{}).Where("country_code = ? AND phone_number = ?", admin.CountryCode, admin.PhoneNumber).Count(&countByPhone)
+	phoneExists := countByPhone > 0
+
+	if emailExists {
+		errorMessage := map[string]string{"error": "An admin with this email already exists"}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
+	}
+	if phoneExists {
+		errorMessage := map[string]string{"error": "An admin with this phone number already exists"}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
+	}
+
+	// Create the admin if validation passes
 	db.Create(&admin)
 	response, _ := json.Marshal(admin)
 	return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 201}, nil
