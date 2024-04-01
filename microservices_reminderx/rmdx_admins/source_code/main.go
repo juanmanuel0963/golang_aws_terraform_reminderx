@@ -10,22 +10,10 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/juanmanuel0963/golang_aws_terraform_reminderx/v2/microservices_reminderx/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
-
-type Admin struct {
-	gorm.Model           // Includes fields: ID, CreatedAt, UpdatedAt, DeletedAt
-	FirstName     string `json:"firstName"`
-	SurName       string `json:"surName"`
-	CountryCode   string `json:"countryCode"`
-	PhoneNumber   string `json:"phoneNumber"` // Updated field name
-	Email         string `json:"email"`
-	Password      string `json:"password"`
-	IsSuperAdmin  bool   `json:"isSuperAdmin"`
-	IsAdmin       bool   `json:"isAdmin"`
-	ParentAdminID uint   `json:"parentAdminID"`
-}
 
 var db *gorm.DB
 
@@ -46,7 +34,7 @@ func init() {
 }
 
 func main() {
-	db.AutoMigrate(&Admin{})
+	db.AutoMigrate(&models.Admin{})
 	fmt.Println("Running server...")
 	lambda.Start(HandleRequest)
 }
@@ -74,56 +62,47 @@ func GetAdmins(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 	if adminIDStr != "" {
 		adminID, err := strconv.Atoi(adminIDStr)
 		if err != nil {
-			return events.APIGatewayProxyResponse{Body: "Invalid admin ID", StatusCode: 400}, nil
+			errorMessage := map[string]string{"error": "Invalid admin ID"}
+			responseJSON, _ := json.Marshal(errorMessage)
+			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 		}
 
-		var admin Admin
+		var admin models.Admin
 		result := db.First(&admin, adminID)
 		if result.Error != nil {
-			return events.APIGatewayProxyResponse{Body: "Admin not found", StatusCode: 404}, nil
+			errorMessage := map[string]string{"error": "Admin not found"}
+			responseJSON, _ := json.Marshal(errorMessage)
+			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 404}, nil
 		}
 
 		response, _ := json.Marshal(admin)
 		return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
 	}
 
-	var admins []Admin
+	var admins []models.Admin
 	db.Find(&admins)
 	response, _ := json.Marshal(admins)
 	return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
 }
-
-/*
-	func CreateAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-		log.Println("POST")
-		var admin Admin
-		err := json.Unmarshal([]byte(request.Body), &admin)
-		if err != nil {
-			return events.APIGatewayProxyResponse{Body: fmt.Sprintf("Failed to unmarshal request body: %v", err), StatusCode: 400}, nil
-		}
-		db.Create(&admin)
-		response, _ := json.Marshal(admin)
-		return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 201}, nil
-	}
-*/
-
 func CreateAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("POST")
 
-	var admin Admin
+	var admin models.Admin
 	err := json.Unmarshal([]byte(request.Body), &admin)
 	if err != nil {
-		return events.APIGatewayProxyResponse{Body: fmt.Sprintf("Failed to unmarshal request body: %v", err), StatusCode: 400}, nil
+		errorMessage := map[string]string{"error": fmt.Sprintf("Failed to unmarshal request body: %v", err)}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 	}
 
 	// Check if an admin with the provided email exists
 	var countByEmail int64
-	db.Model(&Admin{}).Where("email = ?", admin.Email).Count(&countByEmail)
+	db.Model(&models.Admin{}).Where("email = ?", admin.Email).Count(&countByEmail)
 	emailExists := countByEmail > 0
 
 	// Check if an admin with the provided countryCode and phoneNumber exists
 	var countByPhone int64
-	db.Model(&Admin{}).Where("country_code = ? AND phone_number = ?", admin.CountryCode, admin.PhoneNumber).Count(&countByPhone)
+	db.Model(&models.Admin{}).Where("country_code = ? AND phone_number = ?", admin.CountryCode, admin.PhoneNumber).Count(&countByPhone)
 	phoneExists := countByPhone > 0
 
 	if emailExists {
@@ -149,20 +128,26 @@ func UpdateAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 	adminID, err := strconv.Atoi(request.QueryStringParameters["id"])
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{Body: "Invalid admin ID", StatusCode: 400}, nil
+		errorMessage := map[string]string{"error": "Invalid admin ID"}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 	}
 
-	var updatedAdmin Admin
+	var updatedAdmin models.Admin
 	err = json.Unmarshal([]byte(request.Body), &updatedAdmin)
 	log.Println(updatedAdmin)
 	if err != nil {
-		return events.APIGatewayProxyResponse{Body: fmt.Sprintf("Failed to unmarshal request body: %v", err), StatusCode: 400}, nil
+		errorMessage := map[string]string{"error": fmt.Sprintf("Failed to unmarshal request body: %v", err)}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 	}
 
-	var existingAdmin Admin
+	var existingAdmin models.Admin
 	result := db.First(&existingAdmin, adminID)
 	if result.Error != nil {
-		return events.APIGatewayProxyResponse{Body: "Admin not found", StatusCode: 404}, nil
+		errorMessage := map[string]string{"error": "Admin not found"}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 404}, nil
 	}
 
 	db.Model(&existingAdmin).Updates(&updatedAdmin)
@@ -177,13 +162,17 @@ func DeleteAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyR
 
 	adminID, err := strconv.Atoi(request.QueryStringParameters["id"])
 	if err != nil {
-		return events.APIGatewayProxyResponse{Body: "Invalid admin ID", StatusCode: 400}, nil
+		errorMessage := map[string]string{"error": "Invalid admin ID"}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 	}
 
-	var admin Admin
+	var admin models.Admin
 	result := db.First(&admin, adminID)
 	if result.Error != nil {
-		return events.APIGatewayProxyResponse{Body: "Admin not found", StatusCode: 404}, nil
+		errorMessage := map[string]string{"error": "Admin not found"}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 404}, nil
 	}
 
 	db.Delete(&admin)

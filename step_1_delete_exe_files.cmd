@@ -17,3 +17,13 @@ del *.exe~
 del bootstrap
 cd D:\projects\golang_aws_terraform_reminderx\microservices_reminderx\rmdx_admins\last_deploy
 del *.zip
+
+::Delete Files :: reminderx_admins_login-------------
+cd D:\projects\golang_aws_terraform_reminderx\microservices_reminderx\rmdx_admins_login\source_code
+del main
+del main.exe
+del *.exe
+del *.exe~
+del bootstrap
+cd D:\projects\golang_aws_terraform_reminderx\microservices_reminderx\rmdx_admins_login\last_deploy
+del *.zip
