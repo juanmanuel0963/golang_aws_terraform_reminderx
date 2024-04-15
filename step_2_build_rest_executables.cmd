@@ -8,7 +8,6 @@ cd D:\projects\golang_aws_terraform_reminderx\microservices_restful_lambda\lambd
 go build main.go
 ren main bootstrap
 
-
 ::Build Files :: reminderx_admins-------------
 cd D:\projects\golang_aws_terraform_reminderx\microservices_reminderx\rmdx_admins\source_code
 go build main.go
@@ -16,6 +15,11 @@ ren main bootstrap
 
 ::Build Files :: reminderx_admins_login-------------
 cd D:\projects\golang_aws_terraform_reminderx\microservices_reminderx\rmdx_admins_login\source_code
+go build main.go
+ren main bootstrap
+
+::Build Files :: reminderx_clients-------------
+cd D:\projects\golang_aws_terraform_reminderx\microservices_reminderx\rmdx_clients\source_code
 go build main.go
 ren main bootstrap
 
