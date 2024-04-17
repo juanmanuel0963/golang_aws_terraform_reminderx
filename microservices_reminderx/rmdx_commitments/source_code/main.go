@@ -34,8 +34,8 @@ func init() {
 }
 
 func main() {
-	//db.AutoMigrate(&models.Admin{})
-	db.AutoMigrate(&models.Admin{}, &models.Client{})
+	//db.AutoMigrate(&models.Commitment{})
+	db.AutoMigrate(&models.Commitment{}, &models.Client{}, &models.Commitment{})
 	fmt.Println("Running server...")
 	lambda.Start(HandleRequest)
 }
@@ -43,139 +43,118 @@ func main() {
 func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	switch request.HTTPMethod {
 	case "GET":
-		return GetAdmins(request)
+		return GetCommitments(request)
 	case "POST":
-		return CreateAdmin(request)
+		return CreateCommitment(request)
 	case "PUT":
-		return UpdateAdmin(request)
+		return UpdateCommitment(request)
 	case "DELETE":
-		return DeleteAdmin(request)
+		return DeleteCommitment(request)
 	default:
 		return events.APIGatewayProxyResponse{StatusCode: 405}, nil
 	}
 }
 
-func GetAdmins(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("GET")
 	log.Println(request.QueryStringParameters)
-	adminIDStr := request.QueryStringParameters["id"]
+	commitmentIDStr := request.QueryStringParameters["id"]
 
-	if adminIDStr != "" {
-		adminID, err := strconv.Atoi(adminIDStr)
+	if commitmentIDStr != "" {
+		commitmentID, err := strconv.Atoi(commitmentIDStr)
 		if err != nil {
-			errorMessage := map[string]string{"error": "Invalid admin ID"}
+			errorMessage := map[string]string{"error": "Invalid commitment ID"}
 			responseJSON, _ := json.Marshal(errorMessage)
 			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 		}
 
-		var admin models.Admin
-		result := db.First(&admin, adminID)
+		var commitment models.Commitment
+		result := db.First(&commitment, commitmentID)
 		if result.Error != nil {
-			errorMessage := map[string]string{"error": "Admin not found"}
+			errorMessage := map[string]string{"error": "Commitment not found"}
 			responseJSON, _ := json.Marshal(errorMessage)
 			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 404}, nil
 		}
 
-		response, _ := json.Marshal(admin)
+		response, _ := json.Marshal(commitment)
 		return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
 	}
 
-	var admins []models.Admin
-	db.Find(&admins)
-	response, _ := json.Marshal(admins)
+	var commitments []models.Commitment
+	db.Find(&commitments)
+	response, _ := json.Marshal(commitments)
 	return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
 }
-func CreateAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func CreateCommitment(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("POST")
 
-	var admin models.Admin
-	err := json.Unmarshal([]byte(request.Body), &admin)
+	var commitment models.Commitment
+	err := json.Unmarshal([]byte(request.Body), &commitment)
 	if err != nil {
 		errorMessage := map[string]string{"error": fmt.Sprintf("Failed to unmarshal request body: %v", err)}
 		responseJSON, _ := json.Marshal(errorMessage)
 		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 	}
 
-	// Check if an admin with the provided email exists
-	var countByEmail int64
-	db.Model(&models.Admin{}).Where("email = ?", admin.Email).Count(&countByEmail)
-	emailExists := countByEmail > 0
-
-	// Check if an admin with the provided countryCode and phoneNumber exists
-	var countByPhone int64
-	db.Model(&models.Admin{}).Where("country_code = ? AND phone_number = ?", admin.CountryCode, admin.PhoneNumber).Count(&countByPhone)
-	phoneExists := countByPhone > 0
-
-	if emailExists {
-		errorMessage := map[string]string{"error": "An admin with this email already exists"}
-		responseJSON, _ := json.Marshal(errorMessage)
-		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
-	}
-	if phoneExists {
-		errorMessage := map[string]string{"error": "An admin with this phone number already exists"}
-		responseJSON, _ := json.Marshal(errorMessage)
-		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
-	}
-
-	// Create the admin if validation passes
-	db.Create(&admin)
-	response, _ := json.Marshal(admin)
+	// Create the commitment if validation passes
+	db.Create(&commitment)
+	response, _ := json.Marshal(commitment)
 	return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 201}, nil
 }
 
-func UpdateAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func UpdateCommitment(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("PUT")
 	log.Println(request.QueryStringParameters)
-	adminID, err := strconv.Atoi(request.QueryStringParameters["id"])
+	commitmentID, err := strconv.Atoi(request.QueryStringParameters["id"])
 
 	if err != nil {
-		errorMessage := map[string]string{"error": "Invalid admin ID"}
+		errorMessage := map[string]string{"error": "Invalid commitment ID"}
 		responseJSON, _ := json.Marshal(errorMessage)
 		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 	}
 
-	var updatedAdmin models.Admin
-	err = json.Unmarshal([]byte(request.Body), &updatedAdmin)
-	log.Println(updatedAdmin)
+	var updatedCommitment models.Commitment
+	err = json.Unmarshal([]byte(request.Body), &updatedCommitment)
+	log.Println(updatedCommitment)
 	if err != nil {
 		errorMessage := map[string]string{"error": fmt.Sprintf("Failed to unmarshal request body: %v", err)}
 		responseJSON, _ := json.Marshal(errorMessage)
 		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 	}
 
-	var existingAdmin models.Admin
-	result := db.First(&existingAdmin, adminID)
+	var existingCommitment models.Commitment
+	result := db.First(&existingCommitment, commitmentID)
 	if result.Error != nil {
-		errorMessage := map[string]string{"error": "Admin not found"}
+		errorMessage := map[string]string{"error": "Commitment not found"}
 		responseJSON, _ := json.Marshal(errorMessage)
 		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 404}, nil
 	}
 
-	db.Model(&existingAdmin).Updates(&updatedAdmin)
-	response, _ := json.Marshal(existingAdmin)
+	db.Model(&existingCommitment).Updates(&updatedCommitment)
+	response, _ := json.Marshal(existingCommitment)
 	return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
 }
 
-func DeleteAdmin(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func DeleteCommitment(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("DELETE")
 	log.Println(request.QueryStringParameters)
 	log.Println(request.PathParameters)
 
-	adminID, err := strconv.Atoi(request.QueryStringParameters["id"])
+	commitmentID, err := strconv.Atoi(request.QueryStringParameters["id"])
 	if err != nil {
-		errorMessage := map[string]string{"error": "Invalid admin ID"}
+		errorMessage := map[string]string{"error": "Invalid commitment ID"}
 		responseJSON, _ := json.Marshal(errorMessage)
 		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 	}
 
-	var admin models.Admin
-	result := db.First(&admin, adminID)
+	var commitment models.Commitment
+	result := db.First(&commitment, commitmentID)
 	if result.Error != nil {
-		errorMessage := map[string]string{"error": "Admin not found"}
+		errorMessage := map[string]string{"error": "Commitment not found"}
 		responseJSON, _ := json.Marshal(errorMessage)
 		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 404}, nil
 	}
 
-	db.Delete(&admin)
+	db.Delete(&commitment)
 	return events.APIGatewayProxyResponse{StatusCode: 204}, nil
 }

@@ -23,6 +23,11 @@ cd D:\projects\golang_aws_terraform_reminderx\microservices_reminderx\rmdx_clien
 go build main.go
 ren main bootstrap
 
+::Build Files :: reminderx_commitments-------------
+cd D:\projects\golang_aws_terraform_reminderx\microservices_reminderx\rmdx_commitments\source_code
+go build main.go
+ren main bootstrap
+
 ::--------Back to root folder-------------
 cd D:\projects\golang_aws_terraform_reminderx\
 

@@ -39,7 +39,7 @@ func init() {
 }
 
 func main() {
-
+	db.AutoMigrate(&models.Admin{}, &models.Client{}, &models.Commitment{})
 	fmt.Println("Running server...")
 	lambda.Start(HandleRequest)
 }

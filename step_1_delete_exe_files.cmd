@@ -37,3 +37,13 @@ del *.exe~
 del bootstrap
 cd D:\projects\golang_aws_terraform_reminderx\microservices_reminderx\rmdx_clients\last_deploy
 del *.zip
+
+::Delete Files :: reminderx_commitments-------------
+cd D:\projects\golang_aws_terraform_reminderx\microservices_reminderx\rmdx_commitments\source_code
+del main
+del main.exe
+del *.exe
+del *.exe~
+del bootstrap
+cd D:\projects\golang_aws_terraform_reminderx\microservices_reminderx\rmdx_commitments\last_deploy
+del *.zip
