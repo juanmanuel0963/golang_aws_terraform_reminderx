@@ -68,8 +68,11 @@ func GetClients(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRe
 			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 		}
 
-		var client models.Client
-		result := db.First(&client, clientID)
+		var client models.Client_Get
+		result := db.Model(&models.Client{}).
+			Select("clients.*, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
+			Joins("INNER JOIN admins ON clients.admin_id = admins.id").
+			First(&client, clientID)
 		if result.Error != nil {
 			errorMessage := map[string]string{"error": "Client not found"}
 			responseJSON, _ := json.Marshal(errorMessage)
@@ -80,11 +83,21 @@ func GetClients(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRe
 		return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
 	}
 
-	var clients []models.Client
-	db.Find(&clients)
+	var clients []models.Client_Get
+	result := db.Model(&models.Client{}).
+		Select("clients.*, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
+		Joins("INNER JOIN admins ON clients.admin_id = admins.id").
+		Find(&clients)
+	if result.Error != nil {
+		errorMessage := map[string]string{"error": "Failed to fetch clients"}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 500}, nil
+	}
+
 	response, _ := json.Marshal(clients)
 	return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
 }
+
 func CreateClient(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("POST")
 
