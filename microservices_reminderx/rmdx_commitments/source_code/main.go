@@ -68,8 +68,12 @@ func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayPro
 			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 		}
 
-		var commitment models.Commitment
-		result := db.First(&commitment, commitmentID)
+		var commitment models.Commitment_Get
+		result := db.Model(&models.Commitment{}).
+			Select("commitments.*, clients.first_name as client_first_name, clients.sur_name as client_sur_name").
+			Joins("INNER JOIN clients ON commitments.client_id = clients.id").
+			First(&commitment, commitmentID)
+
 		if result.Error != nil {
 			errorMessage := map[string]string{"error": "Commitment not found"}
 			responseJSON, _ := json.Marshal(errorMessage)
@@ -80,11 +84,21 @@ func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayPro
 		return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
 	}
 
-	var commitments []models.Commitment
-	db.Find(&commitments)
+	var commitments []models.Commitment_Get
+	result := db.Model(&models.Commitment{}).
+		Select("commitments.*, clients.first_name as client_first_name, clients.sur_name as client_sur_name").
+		Joins("INNER JOIN clients ON commitments.client_id = clients.id").
+		Find(&commitments)
+	if result.Error != nil {
+		errorMessage := map[string]string{"error": "Failed to fetch commitments"}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 500}, nil
+	}
+
 	response, _ := json.Marshal(commitments)
 	return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
 }
+
 func CreateCommitment(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("POST")
 

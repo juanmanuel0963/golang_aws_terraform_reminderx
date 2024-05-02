@@ -73,6 +73,7 @@ func GetClients(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRe
 			Select("clients.*, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
 			Joins("INNER JOIN admins ON clients.admin_id = admins.id").
 			First(&client, clientID)
+
 		if result.Error != nil {
 			errorMessage := map[string]string{"error": "Client not found"}
 			responseJSON, _ := json.Marshal(errorMessage)
