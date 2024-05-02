@@ -21,4 +21,6 @@ type Commitment_Get struct {
 	Client          Client `gorm:"foreignKey:ClientID"` // use AdminID as foreign key
 	ClientFirstName string `json:"clientFirstName"`
 	ClientSurName   string `json:"clientSurName"`
+	AdminFirstName  string `json:"adminFirstName"`
+	AdminSurName    string `json:"adminSurName"`
 }

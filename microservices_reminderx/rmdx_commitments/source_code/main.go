@@ -59,6 +59,7 @@ func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayPro
 	log.Println("GET")
 	log.Println(request.QueryStringParameters)
 	commitmentIDStr := request.QueryStringParameters["id"]
+	adminIDStr := request.QueryStringParameters["adminId"]
 
 	if commitmentIDStr != "" {
 		commitmentID, err := strconv.Atoi(commitmentIDStr)
@@ -69,10 +70,22 @@ func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayPro
 		}
 
 		var commitment models.Commitment_Get
-		result := db.Model(&models.Commitment{}).
-			Select("commitments.*, clients.first_name as client_first_name, clients.sur_name as client_sur_name").
-			Joins("INNER JOIN clients ON commitments.client_id = clients.id").
-			First(&commitment, commitmentID)
+		query := db.Model(&models.Commitment{}).
+			Select("commitments.*, clients.first_name as client_first_name, clients.sur_name as client_sur_name, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
+			Joins("INNER JOIN clients ON commitments.client_id = clients.id INNER JOIN admins ON clients.admin_id = admins.id").
+			Where("commitments.id = ?", commitmentID)
+
+		if adminIDStr != "" {
+			adminID, err := strconv.Atoi(adminIDStr)
+			if err != nil {
+				errorMessage := map[string]string{"error": "Invalid admin ID"}
+				responseJSON, _ := json.Marshal(errorMessage)
+				return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
+			}
+			query = query.Where("admins.id = ?", adminID)
+		}
+
+		result := query.First(&commitment)
 
 		if result.Error != nil {
 			errorMessage := map[string]string{"error": "Commitment not found"}
@@ -85,10 +98,21 @@ func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayPro
 	}
 
 	var commitments []models.Commitment_Get
-	result := db.Model(&models.Commitment{}).
-		Select("commitments.*, clients.first_name as client_first_name, clients.sur_name as client_sur_name").
-		Joins("INNER JOIN clients ON commitments.client_id = clients.id").
-		Find(&commitments)
+	query := db.Model(&models.Commitment{}).
+		Select("commitments.*, clients.first_name as client_first_name, clients.sur_name as client_sur_name, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
+		Joins("INNER JOIN clients ON commitments.client_id = clients.id INNER JOIN admins ON clients.admin_id = admins.id")
+
+	if adminIDStr != "" {
+		adminID, err := strconv.Atoi(adminIDStr)
+		if err != nil {
+			errorMessage := map[string]string{"error": "Invalid admin ID"}
+			responseJSON, _ := json.Marshal(errorMessage)
+			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
+		}
+		query = query.Where("admins.id = ?", adminID)
+	}
+
+	result := query.Find(&commitments)
 	if result.Error != nil {
 		errorMessage := map[string]string{"error": "Failed to fetch commitments"}
 		responseJSON, _ := json.Marshal(errorMessage)
