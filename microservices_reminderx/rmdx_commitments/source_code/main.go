@@ -35,7 +35,7 @@ func init() {
 
 func main() {
 	//db.AutoMigrate(&models.Commitment{})
-	db.AutoMigrate(&models.Commitment{}, &models.Client{}, &models.Commitment{})
+	db.AutoMigrate(&models.Commitment{}, &models.Client{}, &models.Commitment{}, &models.Reminder{})
 	fmt.Println("Running server...")
 	lambda.Start(HandleRequest)
 }
@@ -58,44 +58,7 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("GET")
 	log.Println(request.QueryStringParameters)
-	commitmentIDStr := request.QueryStringParameters["id"]
 	adminIDStr := request.QueryStringParameters["adminId"]
-
-	if commitmentIDStr != "" {
-		commitmentID, err := strconv.Atoi(commitmentIDStr)
-		if err != nil {
-			errorMessage := map[string]string{"error": "Invalid commitment ID"}
-			responseJSON, _ := json.Marshal(errorMessage)
-			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
-		}
-
-		var commitment models.Commitment_Get
-		query := db.Model(&models.Commitment{}).
-			Select("commitments.*, clients.first_name as client_first_name, clients.sur_name as client_sur_name, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
-			Joins("INNER JOIN clients ON commitments.client_id = clients.id INNER JOIN admins ON clients.admin_id = admins.id").
-			Where("commitments.id = ?", commitmentID)
-
-		if adminIDStr != "" {
-			adminID, err := strconv.Atoi(adminIDStr)
-			if err != nil {
-				errorMessage := map[string]string{"error": "Invalid admin ID"}
-				responseJSON, _ := json.Marshal(errorMessage)
-				return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
-			}
-			query = query.Where("admins.id = ?", adminID)
-		}
-
-		result := query.First(&commitment)
-
-		if result.Error != nil {
-			errorMessage := map[string]string{"error": "Commitment not found"}
-			responseJSON, _ := json.Marshal(errorMessage)
-			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 404}, nil
-		}
-
-		response, _ := json.Marshal(commitment)
-		return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
-	}
 
 	var commitments []models.Commitment_Get
 	query := db.Model(&models.Commitment{}).

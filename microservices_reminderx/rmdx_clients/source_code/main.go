@@ -35,7 +35,7 @@ func init() {
 
 func main() {
 	//db.AutoMigrate(&models.Admin{})
-	db.AutoMigrate(&models.Admin{}, &models.Client{}, &models.Commitment{})
+	db.AutoMigrate(&models.Commitment{}, &models.Client{}, &models.Commitment{}, &models.Reminder{})
 	fmt.Println("Running server...")
 	lambda.Start(HandleRequest)
 }
@@ -58,37 +58,24 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 func GetClients(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("GET")
 	log.Println(request.QueryStringParameters)
-	clientIDStr := request.QueryStringParameters["id"]
+	adminIDStr := request.QueryStringParameters["adminId"]
 
-	if clientIDStr != "" {
-		clientID, err := strconv.Atoi(clientIDStr)
+	var clients []models.Client_Get
+	query := db.Model(&models.Client{}).
+		Select("clients.*, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
+		Joins("INNER JOIN admins ON clients.admin_id = admins.id")
+
+	if adminIDStr != "" {
+		adminID, err := strconv.Atoi(adminIDStr)
 		if err != nil {
-			errorMessage := map[string]string{"error": "Invalid Client ID"}
+			errorMessage := map[string]string{"error": "Invalid admin ID"}
 			responseJSON, _ := json.Marshal(errorMessage)
 			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 		}
-
-		var client models.Client_Get
-		result := db.Model(&models.Client{}).
-			Select("clients.*, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
-			Joins("INNER JOIN admins ON clients.admin_id = admins.id").
-			First(&client, clientID)
-
-		if result.Error != nil {
-			errorMessage := map[string]string{"error": "Client not found"}
-			responseJSON, _ := json.Marshal(errorMessage)
-			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 404}, nil
-		}
-
-		response, _ := json.Marshal(client)
-		return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
+		query = query.Where("admins.id = ?", adminID)
 	}
 
-	var clients []models.Client_Get
-	result := db.Model(&models.Client{}).
-		Select("clients.*, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
-		Joins("INNER JOIN admins ON clients.admin_id = admins.id").
-		Find(&clients)
+	result := query.Find(&clients)
 	if result.Error != nil {
 		errorMessage := map[string]string{"error": "Failed to fetch clients"}
 		responseJSON, _ := json.Marshal(errorMessage)
