@@ -596,6 +596,56 @@ output "module_reminderx_reminders_lambda_func_base_url" {
 }
 
 ##################################################################################
+# reminderx_scheduler
+##################################################################################
+
+module "module_reminderx_scheduler" {
+  source                           = "./microservices_reminderx/rmdx_scheduler/terraform"
+  region                           = var.region
+  access_key                       = var.access_key
+  secret_key                       = var.secret_key
+  lambda_func_name                 = "rmdx_scheduler"
+  random_integer                   = local.random_integer
+  random_pet                       = local.random_pet
+  parent_api_gateway_id            = module.module_api_gateway.api_gateway_id
+  parent_api_gateway_name          = module.module_api_gateway.api_gateway_name
+  parent_api_gateway_execution_arn = module.module_api_gateway.api_gateway_execution_arn
+  parent_api_gateway_invoke_url    = module.module_api_gateway.api_gateway_invoke_url
+  dbInstanceAddress                = module.module_db_postgresql.aws_db_instance_address
+  dbName                           = module.module_db_postgresql.aws_db_instance_db_name
+  dbUser                           = var.db_username
+  dbPassword                       = var.db_password
+  dbPort                           = var.db_port
+  vpc_id                           = module.module_networking.vpc_id
+  security_group_id                = module.module_networking.security_group_id
+  db_subnet_group_name             = module.module_db_postgresql.aws_db_subnet_group_name
+}
+
+##################################################################################
+# reminderx_scheduler - OUTPUT
+##################################################################################
+
+output "module_reminderx_scheduler_admins_lambda_func_name" {
+  description = "Name of the Lambda function."
+  value       = module.module_reminderx_scheduler.lambda_func_name
+}
+
+output "module_reminderx_scheduler_lambda_func_bucket_name" {
+  description = "Name of the S3 bucket used to store function code."
+  value       = module.module_reminderx_scheduler.lambda_func_bucket_name
+}
+
+output "module_reminderx_scheduler_lambda_func_role_name" {
+  description = "Name of the rol"
+  value       = module.module_reminderx_scheduler.lambda_func_role_name
+}
+
+output "module_reminderx_scheduler_lambda_func_base_url" {
+  description = "Base URL for API Gateway stage + function name"
+  value       = module.module_reminderx_scheduler.lambda_func_base_url
+}
+
+##################################################################################
 # aws_cognito_user_pool
 ##################################################################################
 

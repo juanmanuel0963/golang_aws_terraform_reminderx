@@ -6,7 +6,7 @@ toolchain go1.21.0
 
 require (
 	github.com/aws/aws-lambda-go v1.41.0
-	github.com/aws/aws-sdk-go v1.44.164
+	github.com/aws/aws-sdk-go v1.53.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	gorm.io/driver/postgres v1.5.7
@@ -54,6 +54,7 @@ require (
 
 require (
 	github.com/MicahParks/keyfunc v1.9.0
+	github.com/google/uuid v1.6.0
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	gorm.io/datatypes v1.2.0
 
