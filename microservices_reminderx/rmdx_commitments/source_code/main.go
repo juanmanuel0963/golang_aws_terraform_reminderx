@@ -59,6 +59,7 @@ func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayPro
 	log.Println("GET")
 	log.Println(request.QueryStringParameters)
 	adminIDStr := request.QueryStringParameters["adminId"]
+	commitmentIDStr := request.QueryStringParameters["commitmentId"]
 
 	var commitments []models.Commitment_Get
 	query := db.Model(&models.Commitment{}).
@@ -75,6 +76,16 @@ func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayPro
 		query = query.Where("admins.id = ?", adminID)
 	}
 
+	if commitmentIDStr != "" {
+		commitmentID, err := strconv.Atoi(commitmentIDStr)
+		if err != nil {
+			errorMessage := map[string]string{"error": "Invalid commitment ID"}
+			responseJSON, _ := json.Marshal(errorMessage)
+			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
+		}
+		query = query.Where("commitments.id = ?", commitmentID)
+	}
+
 	result := query.Find(&commitments)
 	if result.Error != nil {
 		errorMessage := map[string]string{"error": "Failed to fetch commitments"}
@@ -86,6 +97,38 @@ func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayPro
 	return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
 }
 
+/*
+	func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+		log.Println("GET")
+		log.Println(request.QueryStringParameters)
+		adminIDStr := request.QueryStringParameters["adminId"]
+
+		var commitments []models.Commitment_Get
+		query := db.Model(&models.Commitment{}).
+			Select("commitments.*, clients.first_name as client_first_name, clients.sur_name as client_sur_name, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
+			Joins("INNER JOIN clients ON commitments.client_id = clients.id INNER JOIN admins ON clients.admin_id = admins.id")
+
+		if adminIDStr != "" {
+			adminID, err := strconv.Atoi(adminIDStr)
+			if err != nil {
+				errorMessage := map[string]string{"error": "Invalid admin ID"}
+				responseJSON, _ := json.Marshal(errorMessage)
+				return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
+			}
+			query = query.Where("admins.id = ?", adminID)
+		}
+
+		result := query.Find(&commitments)
+		if result.Error != nil {
+			errorMessage := map[string]string{"error": "Failed to fetch commitments"}
+			responseJSON, _ := json.Marshal(errorMessage)
+			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 500}, nil
+		}
+
+		response, _ := json.Marshal(commitments)
+		return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
+	}
+*/
 func CreateCommitment(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("POST")
 
