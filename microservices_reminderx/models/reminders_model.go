@@ -32,14 +32,12 @@ type Reminder_Get struct {
 	Title   string `json:"title"`
 	Message string `json:"message"`
 
-	DaysBefore      int    `json:"daysBefore"`
-	Frequency       string `json:"frequency"`
-	Recipients      string `json:"recipients"`
-	Channels        string `json:"channels"`
-	ClientFirstName string `json:"clientFirstName"`
-	ClientSurName   string `json:"clientSurName"`
-	AdminFirstName  string `json:"adminFirstName"`
-	AdminSurName    string `json:"adminSurName"`
-	ClientSchedule  string `json:"clientSchedule"`
-	AdminSchedule   string `json:"adminSchedule"`
+	DaysBefore     int    `json:"daysBefore"`
+	Frequency      string `json:"frequency"`
+	Recipients     string `json:"recipients"`
+	Channels       string `json:"channels"`
+	ClientName     string `json:"clientName"`
+	AdminName      string `json:"adminName"`
+	ClientSchedule string `json:"clientSchedule"`
+	AdminSchedule  string `json:"adminSchedule"`
 }

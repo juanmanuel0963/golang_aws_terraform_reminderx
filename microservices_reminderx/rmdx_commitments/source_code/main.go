@@ -63,7 +63,7 @@ func GetCommitments(request events.APIGatewayProxyRequest) (events.APIGatewayPro
 
 	var commitments []models.Commitment_Get
 	query := db.Model(&models.Commitment{}).
-		Select("commitments.*, clients.first_name as client_first_name, clients.sur_name as client_sur_name, clients.country_code as client_country_code, clients.phone_number as client_phone_number, clients.email as client_email, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name, admins.country_code as admin_country_code, admins.phone_number as admin_phone_number, admins.email as admin_email").
+		Select("commitments.*, CONCAT(clients.first_name, ' ', clients.sur_name) as client_name, clients.country_code as client_country_code, clients.phone_number as client_phone_number, clients.email as client_email, CONCAT(admins.first_name, ' ', admins.sur_name) as admin_name, admins.country_code as admin_country_code, admins.phone_number as admin_phone_number, admins.email as admin_email").
 		Joins("INNER JOIN clients ON commitments.client_id = clients.id INNER JOIN admins ON clients.admin_id = admins.id")
 
 	if adminIDStr != "" {

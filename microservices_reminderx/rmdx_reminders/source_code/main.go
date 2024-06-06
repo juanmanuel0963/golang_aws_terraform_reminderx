@@ -62,7 +62,7 @@ func GetReminders(request events.APIGatewayProxyRequest) (events.APIGatewayProxy
 
 	var reminders []models.Reminder_Get
 	query := db.Model(&models.Reminder{}).
-		Select("reminders.*, clients.first_name as client_first_name, clients.sur_name as client_sur_name, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
+		Select("reminders.*, CONCAT(clients.first_name, ' ', clients.sur_name) as client_name, CONCAT(admins.first_name, ' ', admins.sur_name) as admin_name").
 		Joins("INNER JOIN clients ON reminders.client_id = clients.id INNER JOIN admins ON clients.admin_id = admins.id")
 
 	if adminIDStr != "" {

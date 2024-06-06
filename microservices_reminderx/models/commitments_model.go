@@ -19,11 +19,13 @@ type Commitment_Get struct {
 	Date              datatypes.Date `json:"date"`
 	ClientID          int
 	Client            Client `gorm:"foreignKey:ClientID"` // use AdminID as foreign key
+	ClientName        string `json:"clientName"`
 	ClientFirstName   string `json:"clientFirstName"`
 	ClientSurName     string `json:"clientSurName"`
 	ClientCountryCode string `json:"clientCountryCode"`
 	ClientPhoneNumber string `json:"clientPhoneNumber"`
 	ClientEmail       string `json:"clientEmail"`
+	AdminName         string `json:"adminName"`
 	AdminFirstName    string `json:"adminFirstName"`
 	AdminSurName      string `json:"adminSurName"`
 	AdminCountryCode  string `json:"adminCountryCode"`
