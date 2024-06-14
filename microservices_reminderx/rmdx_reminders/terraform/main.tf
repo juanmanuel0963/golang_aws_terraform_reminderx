@@ -200,6 +200,19 @@ resource "aws_lambda_function" "the_lambda_function" {
   }
 }
 
+resource "aws_lambda_function_url" "the_lambda_function_url" {
+  function_name      = local.lambda_func_name
+  authorization_type = "NONE"
+
+  cors {
+    allow_credentials = true
+    allow_origins     = ["*"]
+    allow_methods     = ["*"]
+    allow_headers     = ["Content-Type", "Authorization"]
+    max_age           = 0
+  }
+}
+
 //----------IAM Rol creation----------
 
 //Defines an IAM role that allows Lambda to access resources in your AWS account.
@@ -265,8 +278,8 @@ resource "aws_apigatewayv2_integration" "the_lambda_function" {
 resource "aws_apigatewayv2_route" "the_lambda_function" {
   api_id = var.parent_api_gateway_id
 
-  route_key          = "ANY /${local.lambda_func_name}"
-  target             = "integrations/${aws_apigatewayv2_integration.the_lambda_function.id}"
+  route_key = "ANY /${local.lambda_func_name}"
+  target    = "integrations/${aws_apigatewayv2_integration.the_lambda_function.id}"
   //authorization_type = "AWS_IAM"
 }
 

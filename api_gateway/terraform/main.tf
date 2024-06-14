@@ -57,10 +57,9 @@ resource "aws_apigatewayv2_api" "the_api_gateway" {
   protocol_type = "HTTP"
   cors_configuration {
     allow_origins = ["*"]
-    //allow_methods = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST" ,"PUT"]
-    //allow_headers = ["Content-Type", "Authorization", "X-Amz-Date", "X-Api-Key", "X-Amz-Security-Token"]
+    allow_methods = ["GET", "POST", "DELETE", "OPTIONS", "PATCH", "PUT", "HEAD"]
+    allow_headers = ["Content-Type", "Authorization"]
   }
-  
 }
 
 //----------API Gateway default stage creation----------
@@ -72,7 +71,7 @@ resource "aws_apigatewayv2_stage" "the_api_gateway" {
 
   name        = "$default"
   auto_deploy = true
-  
+
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.api_gw.arn
 

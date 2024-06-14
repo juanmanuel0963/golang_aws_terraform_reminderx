@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -14,11 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/scheduler"
 	"github.com/google/uuid"
-	"github.com/juanmanuel0963/golang_aws_terraform_reminderx/v2/microservices_reminderx/models"
-	"gorm.io/gorm"
 )
 
-var db *gorm.DB
+//var db *gorm.DB
 
 func init() {
 	/*
@@ -55,57 +52,18 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 		return CreateScheduler(request)
 	//case "PUT":
 	//	return UpdateReminder(request)
-	//case "DELETE":
-	//	return DeleteReminder(request)
+	case "DELETE":
+		return DeleteScheduler(request)
 	default:
 		return events.APIGatewayProxyResponse{StatusCode: 405}, nil
 	}
 }
 
-func GetReminders(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	log.Println("GET")
-	log.Println(request.QueryStringParameters)
-	adminIDStr := request.QueryStringParameters["adminId"]
-
-	var reminders []models.Reminder_Get
-	query := db.Model(&models.Reminder{}).
-		Select("reminders.*, clients.first_name as client_first_name, clients.sur_name as client_sur_name, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
-		Joins("INNER JOIN clients ON reminders.client_id = clients.id INNER JOIN admins ON clients.admin_id = admins.id")
-
-	if adminIDStr != "" {
-		adminID, err := strconv.Atoi(adminIDStr)
-		if err != nil {
-			errorMessage := map[string]string{"error": "Invalid admin ID"}
-			responseJSON, _ := json.Marshal(errorMessage)
-			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
-		}
-		query = query.Where("admins.id = ?", adminID)
-	}
-
-	result := query.Find(&reminders)
-	if result.Error != nil {
-		errorMessage := map[string]string{"error": "Failed to fetch reminders"}
-		responseJSON, _ := json.Marshal(errorMessage)
-		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 500}, nil
-	}
-
-	response, _ := json.Marshal(reminders)
-	return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
-}
-
 func CreateScheduler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
 	log.Println("POST")
-	/*
-		sess := session.Must(session.NewSession(&aws.Config{
-			Region: aws.String("us-east-1"),
-		}))
-	*/
-	//var svc *scheduler.Scheduler = scheduler.New(sess)
 
 	sess := session.Must(session.NewSession())
-
-	// Create a Scheduler client from just a session.
-	//svc := scheduler.New(sess)
 
 	// Create a Scheduler client with additional configuration
 	svc := scheduler.New(sess, aws.NewConfig().WithRegion("us-east-1"))
@@ -203,59 +161,34 @@ func toJSON(v interface{}) string {
 	return string(bytes)
 }
 
-func UpdateReminder(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	log.Println("PUT")
-	log.Println(request.QueryStringParameters)
-	reminderID, err := strconv.Atoi(request.QueryStringParameters["id"])
-
-	if err != nil {
-		errorMessage := map[string]string{"error": "Invalid reminder ID"}
-		responseJSON, _ := json.Marshal(errorMessage)
-		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
-	}
-
-	var updatedReminder models.Reminder
-	err = json.Unmarshal([]byte(request.Body), &updatedReminder)
-	log.Println(updatedReminder)
-	if err != nil {
-		errorMessage := map[string]string{"error": fmt.Sprintf("Failed to unmarshal request body: %v", err)}
-		responseJSON, _ := json.Marshal(errorMessage)
-		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
-	}
-
-	var existingReminder models.Reminder
-	result := db.First(&existingReminder, reminderID)
-	if result.Error != nil {
-		errorMessage := map[string]string{"error": "Reminder not found"}
-		responseJSON, _ := json.Marshal(errorMessage)
-		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 404}, nil
-	}
-
-	db.Model(&existingReminder).Updates(&updatedReminder)
-	response, _ := json.Marshal(existingReminder)
-	return events.APIGatewayProxyResponse{Body: string(response), StatusCode: 200}, nil
-}
-
-func DeleteReminder(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func DeleteScheduler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("DELETE")
 	log.Println(request.QueryStringParameters)
 	log.Println(request.PathParameters)
 
-	reminderID, err := strconv.Atoi(request.QueryStringParameters["id"])
+	// Create a new AWS session
+	sess := session.Must(session.NewSession())
+
+	// Create a Scheduler client with additional configuration
+	svc := scheduler.New(sess, aws.NewConfig().WithRegion("us-east-1"))
+
+	// Get schedule_id from query string parameters
+	scheduleID, ok := request.QueryStringParameters["schedule_id"]
+	if !ok {
+		log.Println("schedule_id not found in query string parameters")
+		return events.APIGatewayProxyResponse{StatusCode: 400, Body: "schedule_id not found in query string parameters"}, nil
+	}
+
+	// Delete the schedule using the provided schedule ID
+	_, err := svc.DeleteSchedule(&scheduler.DeleteScheduleInput{
+		Name:        aws.String(scheduleID),
+		ClientToken: aws.String(uuid.New().String()), // Generate a unique client token
+	})
+
 	if err != nil {
-		errorMessage := map[string]string{"error": "Invalid reminder ID"}
-		responseJSON, _ := json.Marshal(errorMessage)
-		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
+		log.Println("Error deleting schedule:", err)
+		return events.APIGatewayProxyResponse{StatusCode: 500, Body: fmt.Sprintf(`{"error": "%s"}`, err.Error())}, nil
 	}
 
-	var reminder models.Reminder
-	result := db.First(&reminder, reminderID)
-	if result.Error != nil {
-		errorMessage := map[string]string{"error": "Reminder not found"}
-		responseJSON, _ := json.Marshal(errorMessage)
-		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 404}, nil
-	}
-
-	db.Delete(&reminder)
-	return events.APIGatewayProxyResponse{StatusCode: 204}, nil
+	return events.APIGatewayProxyResponse{StatusCode: 200, Body: fmt.Sprintf(`{"message": "Schedule %s deleted successfully"}`, scheduleID)}, nil
 }

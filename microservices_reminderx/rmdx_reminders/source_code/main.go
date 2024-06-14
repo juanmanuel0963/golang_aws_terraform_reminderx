@@ -145,6 +145,7 @@ func DeleteReminder(request events.APIGatewayProxyRequest) (events.APIGatewayPro
 	if err != nil {
 		errorMessage := map[string]string{"error": "Invalid reminder ID"}
 		responseJSON, _ := json.Marshal(errorMessage)
+		log.Println(errorMessage)
 		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 	}
 
@@ -153,9 +154,74 @@ func DeleteReminder(request events.APIGatewayProxyRequest) (events.APIGatewayPro
 	if result.Error != nil {
 		errorMessage := map[string]string{"error": "Reminder not found"}
 		responseJSON, _ := json.Marshal(errorMessage)
+		log.Println(errorMessage)
 		return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 404}, nil
 	}
 
 	db.Delete(&reminder)
-	return events.APIGatewayProxyResponse{StatusCode: 204}, nil
+	return events.APIGatewayProxyResponse{Body: string(""), StatusCode: 204}, nil
 }
+
+/*
+func DeleteReminder(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	log.Println("DELETE")
+	log.Println(request.QueryStringParameters)
+	log.Println(request.PathParameters)
+
+	if request.HTTPMethod == "OPTIONS" {
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusOK,
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin":  "*",
+				"Access-Control-Allow-Methods": "POST, GET, DELETE, PUT, PATCH, OPTIONS",
+				"Access-Control-Allow-Headers": "token, Content-Type",
+				"Access-Control-Max-Age":       "1728000",
+				"Content-Length":               "0",
+				"Content-Type":                 "text/plain",
+			},
+			Body: "",
+		}, nil
+	}
+
+	reminderID, err := strconv.Atoi(request.QueryStringParameters["id"])
+	if err != nil {
+		errorMessage := map[string]string{"error": "Invalid reminder ID"}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{
+			Body:       string(responseJSON),
+			StatusCode: http.StatusBadRequest,
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin":  "*",
+				"Access-Control-Allow-Methods": "POST, GET, DELETE, PUT, PATCH, OPTIONS",
+				"Access-Control-Allow-Headers": "token, Content-Type",
+			},
+		}, nil
+	}
+
+	var reminder models.Reminder
+	result := db.First(&reminder, reminderID)
+	if result.Error != nil {
+		errorMessage := map[string]string{"error": "Reminder not found"}
+		responseJSON, _ := json.Marshal(errorMessage)
+		return events.APIGatewayProxyResponse{
+			Body:       string(responseJSON),
+			StatusCode: http.StatusNotFound,
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin":  "*",
+				"Access-Control-Allow-Methods": "POST, GET, DELETE, PUT, PATCH, OPTIONS",
+				"Access-Control-Allow-Headers": "token, Content-Type",
+			},
+		}, nil
+	}
+
+	db.Delete(&reminder)
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusNoContent,
+		Headers: map[string]string{
+			"Access-Control-Allow-Origin":  "*",
+			"Access-Control-Allow-Methods": "POST, GET, DELETE, PUT, PATCH, OPTIONS",
+			"Access-Control-Allow-Headers": "token, Content-Type",
+		},
+	}, nil
+}
+*/
