@@ -58,9 +58,12 @@ func HandleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 func GetClients(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Println("GET")
 	log.Println(request.QueryStringParameters)
-	adminIDStr := request.QueryStringParameters["adminId"]
 
-	var clients []models.Client_Get
+	adminIDStr := request.QueryStringParameters["adminId"]
+	clientIDStr := request.QueryStringParameters["clientId"]
+
+	var clients []models.Client
+
 	query := db.Model(&models.Client{}).
 		Select("clients.*, admins.first_name as admin_first_name, admins.sur_name as admin_sur_name").
 		Joins("INNER JOIN admins ON clients.admin_id = admins.id")
@@ -73,6 +76,16 @@ func GetClients(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRe
 			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
 		}
 		query = query.Where("admins.id = ?", adminID)
+	}
+
+	if clientIDStr != "" {
+		clientID, err := strconv.Atoi(clientIDStr)
+		if err != nil {
+			errorMessage := map[string]string{"error": "Invalid client ID"}
+			responseJSON, _ := json.Marshal(errorMessage)
+			return events.APIGatewayProxyResponse{Body: string(responseJSON), StatusCode: 400}, nil
+		}
+		query = query.Where("clients.id = ?", clientID)
 	}
 
 	result := query.Find(&clients)
